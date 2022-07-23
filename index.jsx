@@ -20,26 +20,26 @@ String.prototype.replaceAt=function(index, char) {
 
 function saveJSON(data, filename){
 
- if(!data) {
-     console.error('No data')
-     return;
- }
+    if(!data) {
+        console.error('No data')
+        return;
+    }
 
- if(!filename) filename = 'piwniczak.json'
+    if(!filename) filename = 'piwniczak.json'
 
- if(typeof data === "object"){
-     data = JSON.stringify(data, undefined, 4)
- }
+    if(typeof data === "object"){
+        data = JSON.stringify(data, undefined, 4)
+    }
 
- var blob = new Blob([data], {type: 'text/json'}),
-     e    = document.createEvent('MouseEvents'),
-     a    = document.createElement('a')
+    var blob = new Blob([data], {type: 'text/json'}),
+        e    = document.createEvent('MouseEvents'),
+        a    = document.createElement('a')
 
- a.download = filename
- a.href = window.URL.createObjectURL(blob)
- a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':')
- e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
- a.dispatchEvent(e)
+    a.download = filename
+    a.href = window.URL.createObjectURL(blob)
+    a.dataset.downloadurl =  ['text/json', a.download, a.href].join(':')
+    e.initMouseEvent('click', true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null)
+    a.dispatchEvent(e)
 }
 
 function isEmpty(value){
@@ -133,6 +133,7 @@ constructor(props) {
 }
 
 
+
 class ProgramForm extends React.Component{
  constructor(props) {
    super(props);
@@ -150,25 +151,12 @@ class ProgramForm extends React.Component{
       checked = true;
    }
 
-   let deviceDrop ="";
-   let vals = []
-   vals.push(<option label=""></option>);
-
-   for(var device of this.props.devices){
-       vals.push( <option value={device.code} >{device.code}</option> );
-   }
-
-   let acts = [];
-   acts.push(<option label=""></option>);
-   acts.push(<option value="Measure">Pomiar</option>);
-   acts.push(<option value="TurnOn">Włączenie</option>);
-   acts.push(<option value="TurnOff">Wyłączenie</option>);
-
-   let map = React.Children.toArray(vals);
-   let actsMap = React.Children.toArray(acts);
-
+   
+  
    let defaultActionCommand = "";
-   let ruleDevice1 = (this.props.value.rule != undefined ? this.props.value.rule[0].device : undefined);
+   let ruleDevice1 = (this.props.value.rule != undefined && this.props.value.rule.length > 0? 
+            this.props.value.rule[0].device : undefined);
+
    if(ruleDevice1 != undefined && ruleDevice1 != ""){
      //try find port
      let port = undefined;
@@ -180,133 +168,127 @@ class ProgramForm extends React.Component{
            break;
          }
      }
-
    }
+
+   let vals = []
+   vals.push(<option label=""></option>);
+
+   for(var device of this.props.devices){
+       vals.push( <option value={device.code} >{device.code}</option> );
+   }
+   let deviceMap = React.Children.toArray(vals);
+
+
+   let acts = [];
+   acts.push(<option label=""></option>);
+   acts.push(<option value="Measure">Pomiar</option>);
+   acts.push(<option value="TurnOn">Włączenie</option>);
+   acts.push(<option value="TurnOff">Wyłączenie</option>);
+   let actsMap = React.Children.toArray(acts);
 
    return(
 
      <div>
        <div class="uk-inline">
            <span class="uk-badge" uk-icon="file-edit" type="button">Edytuj</span>
-           <div uk-drop="mode: click">
-                <form class="uk-background-muted uk-form uk-margin" >
-                     <div class="uk-margin">
-                       <label class="uk-form-label" for="form-horizontal-text">Kod: </label>
-                       <div class="uk-form-controls">
-                           <input class="uk-input uk-margin-left uk-margin-bottom" id="form-horizontal-text" type="text"
-                                   name ="code"
-                                   value={this.props.value.code}
-                                   keyRow = {this.props.value.code}
-                                   onChange={() => this.props.handleChange()}/>
-                       </div>
+           <div uk-drop="mode: click"> 
+                <div class="uk-card uk-card-large uk-card-default">
+                
+                <div class="uk-drop-grid uk-child-width-1-1@m" uk-grid>
+
+                     <div class="uk-card-header">
+                          <div class="uk-margin">
+                            
+                            <label class="uk-form-label" for="form-horizontal-text">Kod: </label>
+                            <div class="uk-form-controls">
+                                <input class="uk-input uk-margin-left uk-margin-bottom" id="form-horizontal-text" type="text"
+                                        name ="code"
+                                        value={this.props.value.code}
+                                        keyRow = {this.props.value.code}
+                                        onChange={() => this.props.handleChange()}/>
+                            </div>
+                          </div>
+
+                          <div class="uk-margin">
+                              <label class="uk-form-label" for="form-horizontal-text">Czas: </label>
+                              <div class="uk-form-controls">
+                                  <input class="uk-input uk-margin-left uk-margin-bottom"  id="form-horizontal-text" type="text" placeholder="..podaj czas aktywacji.."
+                                      name="time"
+                                      value={this.props.value.time}
+                                      keyRow = {this.props.value.code}
+                                      onChange={() => this.props.handleChange()}/>
+                              </div>
+
+                          </div>
+
+                          <div class="uk-margin">
+                            <label class="uk-form-label uk-margin-bottom" for="form-horizontal-text">Dni pracy: </label>
+                            <WeekBadgeComponent dataParent = {this} days = {this.props.value.days} mode='edit'  />
+                          </div>
                      </div>
 
-                     <div class="uk-margin">
-                         <label class="uk-form-label" for="form-horizontal-text">Czas: </label>
-                         <div class="uk-form-controls">
-                             <input class="uk-input uk-margin-left uk-margin-bottom"  id="form-horizontal-text" type="text" placeholder="..podaj czas aktywacji.."
-                                 name="time"
-                                 value={this.props.value.time}
-                                 keyRow = {this.props.value.code}
-                                 onChange={() => this.props.handleChange()}/>
-                         </div>
+                       <RuleRowsComponent  
+                          keyRow = {this.props.value.code}  
+                          rules= {this.props.value.rule}  
+                          deviceMap = {deviceMap}  
+                          handleChange  = { () => this.props.handleChange(event) }
+                          handleRemove = { () => this.props.handleRemoveRule(event) }
+                          handleAdd = { () => this.props.handleAddRule(event) }
+                          />
 
-                     </div>
+                       <label class="uk-form-label" for="form-horizontal-text">Akcja#1: </label>
+                       <fieldset>
+                          <div class="uk-margin">
+                          <label class="uk-form-label" for="form-horizontal-text">Urzadzenie: </label>
+                            <select class="uk-select"
+                                      tag = "action"
+                                      name="device"
+                                      keyRow = {this.props.value.code}
+                                      onChange={() => this.props.handleChange()}
+                                      value={(this.props.value.action != undefined ? this.props.value.action[0].device : "")}
+                                    >
+                                {deviceMap}
+                            </select>
+                          </div>
+                          <div class="uk-margin">
+                              <label class="uk-form-label" for="form-horizontal-text">Polecenie: </label>
+                              <div class="uk-form-controls">
+                                  <select class="uk-select"
+                                            tag = "action"
+                                            name="command"
+                                            keyRow = {this.props.value.code}
+                                            onChange={() => this.props.handleChange()}
+                                            value={(this.props.value.action != undefined ? this.props.value.action[0].command : defaultActionCommand)}
+                                          >
+                                      {actsMap}
+                                  </select>
+                              </div>
+                          </div>
+                          <div class="uk-margin">
+                            <label class="uk-form-label" for="form-horizontal-text">Mqtt: </label>
+                            <div class="uk-form-controls">
+                                <input class="uk-input uk-margin-bottom" id="form-horizontal-text" type="text"
+                                name ="mqtt_topic"
+                                value={this.props.value.mqtt_topic}
+                                keyRow = {this.props.value.code}
+                                onChange={() => this.props.handleChange()}/>
+                            </div>
+                          </div>
+                       </fieldset>
+                
 
-                     <div class="uk-margin">
-                       <label class="uk-form-label uk-margin-bottom" for="form-horizontal-text">Dni pracy: </label>
-                       <WeekBadgeComponent dataParent = {this} days = {this.props.value.days} mode='edit'  />
-                     </div>
-
-
-                       <div class="uk-margin">
-                         <label class="uk-form-label" for="form-horizontal-text">Urządzenie reguły: </label>
-
-                         <select class="uk-select"
-                                     tag = "rule"
-                                     name="device"
-                                     keyRow = {this.props.value.code}
-                                     onChange={() => this.props.handleChange()}
-                                     value={(this.props.value.rule != undefined ? this.props.value.rule[0].device : "")}
-                                   >
-                             {map}
-                         </select>
-
-
-                         <label class="uk-form-label" for="form-horizontal-text">Oczekiwana wartość: </label>
-
-                         <div class="uk-form-controls">
-                             <input class="uk-input uk-margin-left uk-margin-bottom" id="form-horizontal-text" type="text"
-
-                             name ="targetValue"
-                             tag = "rule"
-                             value={(this.props.value.rule != undefined ? this.props.value.rule[0].targetValue : "")}
-                             keyRow = {this.props.value.code}
-                             onChange={() => this.props.handleChange()}/>
-                         </div>
-
-                         <label class="uk-form-label" for="form-horizontal-text">delta: </label>
-
-                         <div class="uk-form-controls">
-                             <input class="uk-input uk-margin-left uk-margin-bottom" id="form-horizontal-text" type="text"
-                             name ="delta"
-                             tag = "rule"
-                             value={(this.props.value.rule != undefined ? this.props.value.rule[0].delta : "")}
-                             keyRow = {this.props.value.code}
-                             onChange={() => this.props.handleChange()}/>
-                         </div>
-
-                       </div>
-
-                       <div class="uk-margin">
-                         <label class="uk-form-label" for="form-horizontal-text">Urządzenie akcji: </label>
-                         <select class="uk-select"
-                                   tag = "action"
-                                   name="device"
-                                   keyRow = {this.props.value.code}
-                                   onChange={() => this.props.handleChange()}
-                                   value={(this.props.value.action != undefined ? this.props.value.action[0].device : "")}
-                                 >
-                             {map}
-                         </select>
-                       </div>
-                       <div class="uk-margin">
-                           <label class="uk-form-label" for="form-horizontal-text">Polecenie: </label>
-                           <div class="uk-form-controls">
-                               <select class="uk-select"
-                                         tag = "action"
-                                         name="command"
-                                         keyRow = {this.props.value.code}
-                                         onChange={() => this.props.handleChange()}
-                                         value={(this.props.value.action != undefined ? this.props.value.action[0].command : defaultActionCommand)}
-                                       >
-                                   {actsMap}
-                               </select>
-                           </div>
-                       </div>
-                       <div class="uk-margin">
-                         <label class="uk-form-label" for="form-horizontal-text">Mqtt: </label>
-                         <div class="uk-form-controls">
-                             <input class="uk-input uk-margin-left uk-margin-bottom" id="form-horizontal-text" type="text"
-                             name ="mqtt_topic"
-                             value={this.props.value.mqtt_topic}
-                             keyRow = {this.props.value.code}
-                             onChange={() => this.props.handleChange()}/>
-                         </div>
-                       </div>
-                 </form>
+                 </div>
+                 </div>
            </div>
        </div>
        <div class="uk-inline">
-           <span class="uk-badge" uk-icon="trash" code = {this.props.value.code} type="button" onClick={() => this.props.removeItem()} >Usuń</span>
+           <span class="uk-badge" uk-icon="trash" code = {this.props.value.code} type="button" onClick={() => this.props.handleRemove()} >Usuń</span>
        </div>
      </div>
    )
  }
 
 }
-
-
 class DeviceForm extends React.Component {
  constructor(props) {
    super(props);
@@ -429,6 +411,202 @@ class DeviceForm extends React.Component {
        </div>
    );
  }
+}
+
+class LinkRuleComponent extends React.Component{
+  constructor(props) {
+    super(props);
+  }
+
+  render(){
+    var operatorList = []
+    operatorList.push(<option label=""></option>);
+    
+    operatorList.push(<option value="AND">AND</option>);
+    operatorList.push(<option value="OR">OR</option>);
+    this.props.operatorMap = React.Children.toArray(operatorList);
+
+    return(
+      
+      <fieldset  class="uk-margin uk-tile-dotted-green">
+         <label class="uk-form-label" for="form-horizontal-text">Operator połaczeniowy: </label>
+
+          <select class="uk-select"
+                  tag = "rule"
+                  name="linkOperator"
+                  keyRow = {this.props.keyRow}
+                  index = {this.props.ruleIndex}
+                  onChange={() => this.props.handleChange()}
+                  value={(this.props.rule != undefined ? this.props.rule.linkOperator : '<')}
+                >
+                {this.props.operatorMap}
+          </select>
+      </fieldset>
+    )
+  }
+}
+
+class RuleRowComponent extends React.Component{
+  constructor(props) {
+    super(props);
+  }
+
+  render(){
+    var operatorList = []
+    operatorList.push(<option label=""></option>);
+    
+    operatorList.push(<option value=">">&gt;</option>);
+    operatorList.push(<option value="<">&lt;</option>);
+    operatorList.push(<option value="=">=</option>);
+  
+    this.props.operatorMap = React.Children.toArray(operatorList);
+
+      return(
+        <fieldset class="uk-margin ">
+
+            <label class="uk-form-label" for="form-horizontal-text">Urzadzenie: </label>
+            <select class="uk-select"
+                        tag = "rule"
+                        name="device"
+                        keyRow = {this.props.keyRow}
+                        index = {this.props.ruleIndex}
+                        onChange={() => this.props.handleChange()}
+                        value={(this.props.rule != undefined ? this.props.rule.device : "")}
+                      >
+                      {this.props.deviceMap}
+            </select>
+        
+            <label class="uk-form-label" for="form-horizontal-text">Operator: </label>
+            <select class="uk-select"
+                    tag = "rule"
+                    name="operator"
+                    keyRow = {this.props.keyRow}
+                    index = {this.props.ruleIndex}
+                    onChange={() => this.props.handleChange()}
+                    value={(this.props.rule != undefined ? this.props.rule.operator : '<')}
+                  >
+                  {this.props.operatorMap}
+            </select>
+
+          <label class="uk-form-label" for="form-horizontal-text">Oczekiwana wartość: </label>
+          <div class="uk-form-controls">
+              <input class="uk-input t uk-margin-bottom" id="form-horizontal-text" type="text"
+                tag = "rule"
+                name ="targetValue"
+                keyRow = {this.props.keyRow}
+                index = {this.props.ruleIndex}
+                onChange={() => this.props.handleChange()}
+                value={(this.props.rule != undefined ? this.props.rule.targetValue : "")}
+              />
+          </div>
+
+          <label class="uk-form-label" for="form-horizontal-text">delta: </label>
+          <div class="uk-form-controls">
+              <input class="uk-input uk-margin-bottom" id="form-horizontal-text" type="text"
+                name ="delta"
+                tag = "rule"
+                keyRow = {this.props.keyRow}
+                index = {this.props.ruleIndex}
+                onChange={() => this.props.handleChange()}
+                value={(this.props.rule != undefined ? this.props.rule.delta : "")}
+              />
+          </div>
+        </fieldset>
+      )
+    
+  }
+}
+
+
+class RuleRowsComponent extends React.Component{
+
+  constructor(props) {
+    super(props);
+  }
+
+  renderLink(rule, ruleIndex){
+      return(
+          <LinkRuleComponent 
+          keyRow  = {this.props.keyRow}  
+          rule    = {rule}
+          ruleIndex = {ruleIndex}
+          handleChange  = { () => this.props.handleChange(event) }
+        /> 
+      )
+  }
+
+  renderRule(rule, ruleIndex){
+    return(
+          <RuleRowComponent   
+              keyRow  = {this.props.keyRow}  
+              rules   = {this.props.rules}
+              rule    = {rule}
+              ruleIndex = {ruleIndex}
+              deviceMap = {this.props.deviceMap}  //dict
+              handleChange  = { () => this.props.handleChange(event)}
+        />
+    )
+  }
+   
+  renderRuleRow(rule, ruleIndex){
+    if(ruleIndex == this.props.rules.length -1)
+      return(
+        <div class="uk-tile-dotted-green">
+          <legend class="uk-form-label" for="form-horizontal-text">Reguła#: {ruleIndex+1}</legend>
+          <span class="uk-icon" uk-icon="minus-circle"  
+            programCode = {this.props.keyRow} 
+            ruleIndex = {ruleIndex} 
+            onClick={(e) => this.props.handleRemove(e)}></span>
+
+          {this.renderRule(rule, ruleIndex)}
+          
+        </div>
+      )
+    else
+      return(
+        <div>
+          <div class="uk-tile-dotted-green">
+            <legend class="uk-form-label" for="form-horizontal-text">Reguła#: {ruleIndex+1}</legend>
+            <span class="uk-icon" uk-icon="minus-circle"  
+                    programCode = {this.props.keyRow} 
+                    ruleIndex = {ruleIndex} 
+                    onClick={(e) => this.props.handleRemove(e)} ></span>
+
+            {this.renderRule(rule, ruleIndex)}
+          </div>
+
+          <div class="uk-tile-dotted-green">
+            {this.renderLink(rule, ruleIndex)}
+          </div>
+        </div>
+      )
+  }
+
+  render(){
+        if(this.props.rules != undefined){
+            let ruleList = []
+            let index = 0
+            for(var rule of this.props.rules){
+              ruleList.push(this.renderRuleRow(rule, index++))
+            }
+            let map = React.Children.toArray(ruleList)
+            return(
+              <div>
+                <div>{map}</div>
+                <span class="uk-icon" uk-icon="plus-circle"
+                  programCode = {this.props.keyRow}  
+                  onClick={(e) => this.props.handleAdd(e)} ></span>
+              </div>
+            )
+      }
+      else{
+        return(<div>
+          <span class="uk-icon" uk-icon="plus-circle"
+                  programCode = {this.props.keyRow}  
+                  onClick={(e) => this.props.handleAdd(e)} ></span>
+        </div>)
+      }
+  }
 }
 
 class WeekBadgeComponent extends React.Component{
@@ -678,10 +856,9 @@ class AppComponent extends React.Component{
            ,isRestartInProgress: false
            ,clientMqtt  : undefined
            ,editMode : false
+           
        };
    }
-
-   
 
 
    connectToMqttServer() {
@@ -689,25 +866,15 @@ class AppComponent extends React.Component{
 
        let client = new Paho.MQTT.Client(this.state.settings.mqtt_server, Number(this.state.settings.mqtt_port_ws), generateUUID());        
 
-       client.onConnectionLost = onConnectionLost;
-       
        // connect the client
        client.connect({onSuccess:onConnect});
-
+       
        // called when the client connects
        function onConnect() {
          // Once a connection has been made, make a subscription and send a message.
          resolve(client)
-         console.log("onConnect sucess");
+         console.log("mqtt onConnect success");
        }
-
-       // called when the client loses its connection
-       function onConnectionLost(responseObject) {
-         if (responseObject.errorCode !== 0) {
-           console.log("onConnectionLost:"+responseObject.errorMessage);
-         }
-       }
-
      });
    }
 
@@ -766,79 +933,81 @@ class AppComponent extends React.Component{
        });
    }
 
-   async subscribeMqtt(){
-     console.log("subscribeMqtt");
+    //called when the client loses its connection
+     onConnectionLost(responseObject) {
+      if (responseObject.errorCode !== 0) {
+        console.log("mqtt onConnectionLost:"+responseObject.errorMessage);
+       
+        this.loadData()
+      }
+    }
 
-     //subscribe devices
-     let mqttCLient =  this.state.clientMqtt
-     for(var item of this.state.items){
-       if(item.mqtt_topic != undefined){
-         mqttCLient.unsubscribe(item.mqtt_topic);
-         mqttCLient.subscribe(item.mqtt_topic);
-         console.log("mqtt subscribe topic " + item.mqtt_topic);
-       }
-   };
-
-   //subscribe schedulers
-   for(var item of this.state.scheduler){
-       if(item.mqtt_topic != undefined){
-         mqttCLient.unsubscribe(item.mqtt_topic);
-         mqttCLient.subscribe(item.mqtt_topic);
-         console.log("mqtt subscribe topic " + item.mqtt_topic);
-       }
-   };
-   }
+    async reloadData(){
+      if(!this.state.editMode)
+        this.loadData()
+    }
 
    async loadData(){
 
        try{
-       console.log("Load data begin ....")
-       this.setState({ isLoadingDevice: true });
-       this.setState({ isLoadingSettings: true });
-       this.setState({ isLoadingScheduler: true });
+          console.log("Load data begin ....")
+          this.setState({ isLoadingDevice: true });
+          this.setState({ isLoadingSettings: true });
+          this.setState({ isLoadingScheduler: true });
 
-       await this.readSchedulers()
-       await this.readDevices();
+          await this.readSchedulers()
+          await this.readDevices();
 
-       let json = await this.readSettings();
-       
-       this.setState({settings : json});
-       this.setState({ isLoadingSettings: false });
+          let json = await this.readSettings();
+          
+          this.setState({settings : json});
+          this.setState({ isLoadingSettings: false });
 
-       let mqttCLient = await this.connectToMqttServer();
-       this.state.clientMqtt = mqttCLient
+          let mqttCLient = await this.connectToMqttServer();
+          if (mqttCLient != undefined){
 
-       //subscribe devices
-       for(var item of this.state.items){
-           if(item.mqtt_topic != undefined){
-             mqttCLient.subscribe(item.mqtt_topic);
-             console.log("mqtt subscribe topic " + item.mqtt_topic);
-           }
-       };
+              if(this.state.clientMqtt != undefined)
+                delete this.state.clientMqtt
 
-       //subscribe schedulers
-       for(var item of this.state.scheduler){
-           if(item.mqtt_topic != undefined){
-             mqttCLient.subscribe(item.mqtt_topic);
-             console.log("mqtt subscribe topic " + item.mqtt_topic);
-           }
-       };
+              this.state.clientMqtt = mqttCLient
+              //subscribe devices
+              for(var item of this.state.items){
+                  if(item.mqtt_topic != undefined){
+                    mqttCLient.subscribe(item.mqtt_topic);
+                    console.log("mqtt subscribe topic " + item.mqtt_topic);
+                  }
+              };
+
+              //subscribe schedulers
+              for(var item of this.state.scheduler){
+                  if(item.mqtt_topic != undefined){
+                    mqttCLient.subscribe(item.mqtt_topic);
+                    console.log("mqtt subscribe topic " + item.mqtt_topic);
+                  }
+              };
 
 
-       //TODO important
-       mqttCLient.onMessageArrived = this.onMessageArrived.bind(this);
-       
-       this.setState( { editMode : false});
-       
-       console.log("Load data end")
+              //TODO important
+              mqttCLient.onMessageArrived = this.onMessageArrived.bind(this);
+              mqttCLient.onConnectionLost  = this.onConnectionLost.bind(this);
+
+              
+          }
+          else
+            throw "Bład połaczenia mqtt"
+
+          this.setState( { editMode : false});
+          
+          console.log("Load data end")
        }
        catch(error){
          UIkit.notification("Bład konfiguracji: " + error , {status:'primary'})
        }
        finally{
-         this.setState({ isLoadingDevice: false });
-       this.setState({ isLoadingSettings: false });
-       this.setState({ isLoadingScheduler: false });
+          this.setState({ isLoadingDevice: false });
+          this.setState({ isLoadingSettings: false });
+          this.setState({ isLoadingScheduler: false });
+          console.log("Load data end")
        }
      }
 
@@ -1072,7 +1241,7 @@ class AppComponent extends React.Component{
 
   componentDidMount() {
      this.loadData()
-     setInterval(() => this.loadData(), 1000*60*10)//every 10 min 
+     setInterval(() => this.reloadData(), 1000*60*10)//every 10 min 
   }
 
   componentWillUnmount() {
@@ -1093,12 +1262,11 @@ class AppComponent extends React.Component{
   }
 
   createNewProgram(){
-
     //generate random code
     let randomCode = Math.random().toString(36).substring(7);
     let mqtt_topic =  this.state.settings.name + "/program/" +randomCode;
 
-     let newItem = { code : randomCode , time: '00:00', mqtt_topic : mqtt_topic, armed : 0, days :"1111111"};
+     let newItem = { code : randomCode , time: '00:00', mqtt_topic : mqtt_topic, armed : 0, days :"1111111", rule : [], action: [{}]};
 
      let program = this.state.scheduler;
      program.push(newItem);
@@ -1112,7 +1280,7 @@ class AppComponent extends React.Component{
      let editDiv = (
          <div>
              <DeviceForm device = {device}
-                 removeItem    = { () => this.removeDeviceItem(event)   }
+                 removeItem    = { () => this.handleDeviceRemove(event)   }
                  handleChange  = { () => this.handleDeviceChange(event) }
              />
          </div>
@@ -1138,8 +1306,10 @@ class AppComponent extends React.Component{
         <div >
           <ProgramForm  value = {item}
                         devices = {this.state.items}
-                        removeItem    = { () => this.removeProgramItem(event)   }
-                        handleChange  = { () => this.handleProgramChange(event) }
+                        handleRemove      = { () => this.handleRemoveProgram(event)   }
+                        handleChange      = { () => this.handleChangeProgram(event)   }
+                        handleRemoveRule  = { () => this.handleRemoveRule(event)   }
+                        handleAddRule     = { () => this.handleAddRule(event)   }
           />
         </div>
       );
@@ -1197,6 +1367,7 @@ class AppComponent extends React.Component{
     //new el
 
     let map = React.Children.toArray(arr)
+
     let addNewDiv = (
        <div>
          <div class="uk-tile uk-tile-small uk-margin-top uk-margin-right  uk-tile-default">
@@ -1353,9 +1524,6 @@ class AppComponent extends React.Component{
            this.setState({
              items: array
            });
-
-
-         
        }
        this.setState({
          settings: newSettings
@@ -1363,7 +1531,46 @@ class AppComponent extends React.Component{
      }
 
      //programs - event handlers
-     removeProgramItem(event){
+     handleRemoveRule(event){
+      const target = event.target
+      const programCode     = target.getAttribute("programCode")
+      const ruleIndex       = parseInt(target.getAttribute("ruleIndex"))
+
+      let program =  this.state.scheduler.filter(item => item.code == programCode)[0]
+      let rules =  program.rule
+      if(rules.length == 1){
+        program.rule =  []
+      }
+      else{
+        rules.splice(ruleIndex,1)//remove rule at index
+        program.rule = rules
+      }
+      this.setState({scheduler: this.state.scheduler})
+     }
+
+     handleAddRule(event){
+      const target = event.target;
+      const programCode     = target.getAttribute("programCode"); 
+      let program =  this.state.scheduler.filter(item => item.code == programCode)[0];
+      let rules = program.rule;
+
+      //if has previous then add link operator to last
+      if(rules != undefined){
+        let len  = rules.length
+        if(len > 0 ){
+          let prevRule = rules[len -1]
+          prevRule.linkOperator = "AND" //default operator  
+        }
+        rules.push({})
+      }
+      else{
+        program.rule = [{}]
+      }
+      
+      this.setState({scheduler: this.state.scheduler})
+     }
+
+     handleRemoveProgram(event){
        const target = event.target;
        const code = target.getAttribute("code");
 
@@ -1371,21 +1578,20 @@ class AppComponent extends React.Component{
        this.setState({ scheduler: nx});
      }
 
-     handleProgramChange(event){
+     handleChangeProgram(event){
        const target = event.target;
        const key =  target.getAttribute("keyRow");
        const code = target.name;
        const tag = target.getAttribute("tag")
+       const index = target.getAttribute("index");
 
        let array = [... this.state.scheduler]; //make copy
 
        let program =  array.filter(item => item.code == key)[0];//filtruj
 
-       //oblsuga ruleItem dla 1 elementu
-       const ruleItems = ['device', 'targetValue', 'delta'];
+       //maintanin rules
+       const ruleItems = ['device', 'targetValue', 'delta', 'operator', 'linkOperator'];
        const actionItems = ['device', 'command'];
-
-
 
        if(ruleItems.includes(code) && tag == "rule"){
          if(program.rule == undefined){
@@ -1395,7 +1601,7 @@ class AppComponent extends React.Component{
              program.rule.push(json);
            }
            else
-             program.rule[0][code] = target.value;
+             program.rule[index][code] = target.value;
        }
        else if(actionItems.includes(code) && tag == "action" ){
          if(program.action == undefined){
@@ -1470,7 +1676,7 @@ class AppComponent extends React.Component{
 
      }
 
-     removeDeviceItem(event){
+     handleDeviceRemove(event){
        const target = event.target;
        const code = target.getAttribute("code");
 
