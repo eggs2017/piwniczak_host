@@ -178,14 +178,6 @@ class ProgramForm extends React.Component{
    }
    let deviceMap = React.Children.toArray(vals);
 
-
-   let acts = [];
-   acts.push(<option label=""></option>);
-   acts.push(<option value="Measure">Pomiar</option>);
-   acts.push(<option value="TurnOn">Włączenie</option>);
-   acts.push(<option value="TurnOff">Wyłączenie</option>);
-   let actsMap = React.Children.toArray(acts);
-
    return(
 
      <div>
@@ -227,44 +219,30 @@ class ProgramForm extends React.Component{
                           </div>
                      </div>
 
-                       <RuleRowsComponent  
+                       <ConditonRowsComponent  
                           keyRow = {this.props.value.code}  
                           rules= {this.props.value.rule}  
                           deviceMap = {deviceMap}  
                           handleChange  = { () => this.props.handleChange(event) }
-                          handleRemove = { () => this.props.handleRemoveRule(event) }
-                          handleAdd = { () => this.props.handleAddRule(event) }
+
+                          handleAdd     = { () => this.props.handleAddRule(event) }
+                          handleRemove  = { () => this.props.handleRemoveRule(event) }
                           />
 
-                       <label class="uk-form-label" for="form-horizontal-text">Akcja#1: </label>
-                       <fieldset>
-                          <div class="uk-margin">
-                          <label class="uk-form-label" for="form-horizontal-text">Urzadzenie: </label>
-                            <select class="uk-select"
-                                      tag = "action"
-                                      name="device"
-                                      keyRow = {this.props.value.code}
-                                      onChange={() => this.props.handleChange()}
-                                      value={(this.props.value.action != undefined ? this.props.value.action[0].device : "")}
-                                    >
-                                {deviceMap}
-                            </select>
-                          </div>
-                          <div class="uk-margin">
-                              <label class="uk-form-label" for="form-horizontal-text">Polecenie: </label>
-                              <div class="uk-form-controls">
-                                  <select class="uk-select"
-                                            tag = "action"
-                                            name="command"
-                                            keyRow = {this.props.value.code}
-                                            onChange={() => this.props.handleChange()}
-                                            value={(this.props.value.action != undefined ? this.props.value.action[0].command : defaultActionCommand)}
-                                          >
-                                      {actsMap}
-                                  </select>
-                              </div>
-                          </div>
-                          <div class="uk-margin">
+                       <label class="uk-form-label" for="form-horizontal-text">Akcje: </label>
+                      
+                       <ActionRowsComponent
+                          keyRow = {this.props.value.code}  
+                          actions= {this.props.value.action}  
+                          deviceMap = {deviceMap}  
+                          handleChange  = { () => this.props.handleChange(event) }
+
+                          handleAdd = { () => this.props.handleAddAction(event) }
+                          handleRemove = { () => this.props.handleRemoveAction(event) }
+                       />
+
+                    
+                      <div class="uk-margin">
                             <label class="uk-form-label" for="form-horizontal-text">Mqtt: </label>
                             <div class="uk-form-controls">
                                 <input class="uk-input uk-margin-bottom" id="form-horizontal-text" type="text"
@@ -273,9 +251,7 @@ class ProgramForm extends React.Component{
                                 keyRow = {this.props.value.code}
                                 onChange={() => this.props.handleChange()}/>
                             </div>
-                          </div>
-                       </fieldset>
-                
+                      </div>
 
                  </div>
                  </div>
@@ -424,7 +400,7 @@ class LinkRuleComponent extends React.Component{
     
     operatorList.push(<option value="AND">AND</option>);
     operatorList.push(<option value="OR">OR</option>);
-    this.props.operatorMap = React.Children.toArray(operatorList);
+    let operatorMap = React.Children.toArray(operatorList);
 
     return(
       
@@ -439,14 +415,105 @@ class LinkRuleComponent extends React.Component{
                   onChange={() => this.props.handleChange()}
                   value={(this.props.rule != undefined ? this.props.rule.linkOperator : '<')}
                 >
-                {this.props.operatorMap}
+                {operatorMap}
           </select>
       </fieldset>
     )
   }
 }
 
-class RuleRowComponent extends React.Component{
+class ConditonRowsComponent extends React.Component{
+
+  constructor(props) {
+    super(props);
+  }
+
+  renderLink(rule, ruleIndex){
+      return(
+          <LinkRuleComponent 
+          keyRow  = {this.props.keyRow}  
+          rule    = {rule}
+          ruleIndex = {ruleIndex}
+          handleChange  = { () => this.props.handleChange(event) }
+        /> 
+      )
+  }
+
+  renderItem(rule, ruleIndex){
+    return(
+          <ConditionRowComponent   
+              keyRow  = {this.props.keyRow}  
+              rule    = {rule}
+              ruleIndex = {ruleIndex}
+              deviceMap = {this.props.deviceMap}  //dict
+              handleChange  = { () => this.props.handleChange(event)}
+        />
+    )
+  }
+   
+  renderRow(rule, ruleIndex){
+    if(ruleIndex == this.props.rules.length -1)
+      return(
+        <div class="uk-tile-dotted-green">
+          <legend class="uk-form-label" for="form-horizontal-text">Reguła#: {ruleIndex+1}</legend>
+          <span class="uk-icon" uk-icon="minus-circle"  
+            programCode = {this.props.keyRow} 
+            ruleIndex = {ruleIndex} 
+            onClick={(e) => this.props.handleRemove(e)}></span>
+
+          {this.renderItem(rule, ruleIndex)}
+          
+        </div>
+      )
+    else
+      return(
+        <div>
+          <div class="uk-tile-dotted-green">
+            <legend class="uk-form-label" for="form-horizontal-text">Reguła#: {ruleIndex+1}</legend>
+            <span class="uk-icon" uk-icon="minus-circle"  
+                    programCode = {this.props.keyRow} 
+                    ruleIndex = {ruleIndex} 
+                    onClick={(e) => this.props.handleRemove(e)} ></span>
+
+            {this.renderItem(rule, ruleIndex)}
+          </div>
+
+          <div class="uk-tile-dotted-green">
+            {this.renderLink(rule, ruleIndex)}
+          </div>
+        </div>
+      )
+  }
+
+  render(){
+        if(this.props.rules != undefined){
+            let ruleList = []
+            let index = 0
+            for(var rule of this.props.rules){
+              ruleList.push(this.renderRow(rule, index++))
+            }
+            let map = React.Children.toArray(ruleList)
+            return(
+              <div>
+                <div>{map}</div>
+                <span class="uk-icon" uk-icon="plus-circle"
+                  programCode = {this.props.keyRow}  
+                  onClick={(e) => this.props.handleAdd(e)} ></span>
+              </div>
+            )
+      }
+      else{
+        return(<div>
+          <span class="uk-icon" uk-icon="plus-circle"
+                  programCode = {this.props.keyRow}  
+                  onClick={(e) => this.props.handleAdd(e)} ></span>
+        </div>)
+      }
+  }
+}
+
+
+class ConditionRowComponent extends React.Component{
   constructor(props) {
     super(props);
   }
@@ -459,7 +526,7 @@ class RuleRowComponent extends React.Component{
     operatorList.push(<option value="<">&lt;</option>);
     operatorList.push(<option value="=">=</option>);
   
-    this.props.operatorMap = React.Children.toArray(operatorList);
+    let operatorMap = React.Children.toArray(operatorList);
 
       return(
         <fieldset class="uk-margin ">
@@ -485,7 +552,7 @@ class RuleRowComponent extends React.Component{
                     onChange={() => this.props.handleChange()}
                     value={(this.props.rule != undefined ? this.props.rule.operator : '<')}
                   >
-                  {this.props.operatorMap}
+                  {operatorMap}
             </select>
 
           <label class="uk-form-label" for="form-horizontal-text">Oczekiwana wartość: </label>
@@ -517,48 +584,34 @@ class RuleRowComponent extends React.Component{
   }
 }
 
-
-class RuleRowsComponent extends React.Component{
-
-  constructor(props) {
-    super(props);
+class ActionRowsComponent extends React.Component{
+  constructor(props){
+    super(props)
   }
 
-  renderLink(rule, ruleIndex){
-      return(
-          <LinkRuleComponent 
-          keyRow  = {this.props.keyRow}  
-          rule    = {rule}
-          ruleIndex = {ruleIndex}
-          handleChange  = { () => this.props.handleChange(event) }
-        /> 
-      )
-  }
-
-  renderRule(rule, ruleIndex){
+  renderItem(item, itemIndex){
     return(
-          <RuleRowComponent   
+          <ActionRowComponent   
               keyRow  = {this.props.keyRow}  
-              rules   = {this.props.rules}
-              rule    = {rule}
-              ruleIndex = {ruleIndex}
+              action    = {item}
+              itemIndex = {itemIndex}
               deviceMap = {this.props.deviceMap}  //dict
               handleChange  = { () => this.props.handleChange(event)}
         />
     )
   }
    
-  renderRuleRow(rule, ruleIndex){
-    if(ruleIndex == this.props.rules.length -1)
+  renderRow(item, itemIndex){
+    if(itemIndex == this.props.actions.length -1)
       return(
         <div class="uk-tile-dotted-green">
-          <legend class="uk-form-label" for="form-horizontal-text">Reguła#: {ruleIndex+1}</legend>
+          <legend class="uk-form-label" for="form-horizontal-text">Akcja#: {itemIndex+1}</legend>
           <span class="uk-icon" uk-icon="minus-circle"  
             programCode = {this.props.keyRow} 
-            ruleIndex = {ruleIndex} 
+            itemindex = {itemIndex} 
             onClick={(e) => this.props.handleRemove(e)}></span>
 
-          {this.renderRule(rule, ruleIndex)}
+          {this.renderItem(item, itemIndex)}
           
         </div>
       )
@@ -566,30 +619,33 @@ class RuleRowsComponent extends React.Component{
       return(
         <div>
           <div class="uk-tile-dotted-green">
-            <legend class="uk-form-label" for="form-horizontal-text">Reguła#: {ruleIndex+1}</legend>
+            <legend class="uk-form-label" for="form-horizontal-text">Akcja#: {itemIndex+1}</legend>
             <span class="uk-icon" uk-icon="minus-circle"  
                     programCode = {this.props.keyRow} 
-                    ruleIndex = {ruleIndex} 
+                    itemIndex = {itemIndex} 
                     onClick={(e) => this.props.handleRemove(e)} ></span>
 
-            {this.renderRule(rule, ruleIndex)}
+            {this.renderItem(item, itemIndex)}
           </div>
 
           <div class="uk-tile-dotted-green">
-            {this.renderLink(rule, ruleIndex)}
+            
           </div>
         </div>
       )
   }
 
   render(){
-        if(this.props.rules != undefined){
-            let ruleList = []
+        if(this.props.actions != undefined){
+            //create list of items
+            let itemList = []
             let index = 0
-            for(var rule of this.props.rules){
-              ruleList.push(this.renderRuleRow(rule, index++))
+            for(var item of this.props.actions){
+              itemList.push(this.renderRow(item, index++))
             }
-            let map = React.Children.toArray(ruleList)
+            //convert to map
+            let map = React.Children.toArray(itemList)
+
             return(
               <div>
                 <div>{map}</div>
@@ -606,8 +662,58 @@ class RuleRowsComponent extends React.Component{
                   onClick={(e) => this.props.handleAdd(e)} ></span>
         </div>)
       }
+
   }
 }
+
+class ActionRowComponent extends React.Component{
+  constructor(props){
+    super(props)
+  }
+
+  render(){
+  let acts = [];
+   acts.push(<option label=""></option>);
+   acts.push(<option value="Measure">Pomiar</option>);
+   acts.push(<option value="TurnOn">Włączenie</option>);
+   acts.push(<option value="TurnOff">Wyłączenie</option>);
+
+   let actsMap = React.Children.toArray(acts);
+   return(
+    <fieldset>
+      <label class="uk-form-label" for="form-horizontal-text">Urzadzenie: </label>
+            <select class="uk-select"
+                        tag = "action"
+                        name="device"
+                        keyRow = {this.props.keyRow}
+                        index = {this.props.itemIndex}
+                        onChange={() => this.props.handleChange()}
+                        value={(this.props.action != undefined ? this.props.action.device : "")}
+                      >
+                      {this.props.deviceMap}
+            </select>
+
+
+      <div class="uk-margin">
+          <label class="uk-form-label" for="form-horizontal-text">Polecenie: </label>
+          <div class="uk-form-controls">
+              <select class="uk-select"
+                        tag = "action"
+                        name="command"
+                        keyRow = {this.props.keyRow}
+                        index = {this.props.itemIndex}
+                        onChange={() => this.props.handleChange()}
+                        value={(this.props.action != undefined ? this.props.action.command : defaultActionCommand)}
+                      >
+                  {actsMap}
+              </select>
+          </div>
+      </div>
+    </fieldset>
+   )
+  }
+}
+
 
 class WeekBadgeComponent extends React.Component{
  constructor(props) {
@@ -820,19 +926,19 @@ class DeviceRowComponent extends React.Component{
     }
     else {
       let checked = (this.props.value.status != undefined && this.props.value.status == "OnValue" ? true: false);
-
+      
       return(
          <div class={style}>
 
            <label class="uk-text-large uk-position-top" uk-icon={isEmpty(this.props.value.port) ? "git-branch" : ""}  >{this.props.value.code}</label>
            <div class="uk-column-1-4 uk-margin-top">
              <p class="uk-text-small">{checked ? "Włączony" : "Wyłączony"}</p>
+
              <label class="uk-switch uk-light  uk-margin-medium-left" for={this.props.value.code+"_switch"}>
                  <input checked={checked}   type="checkbox" id={this.props.value.code+"_switch"} onChange={() => this.handleClick()} />
                  <div class="uk-switch-slider uk-switch-on-off round"></div>
              </label>
            </div>
-
          </div>
       );
     }
@@ -1306,10 +1412,15 @@ class AppComponent extends React.Component{
         <div >
           <ProgramForm  value = {item}
                         devices = {this.state.items}
-                        handleRemove      = { () => this.handleRemoveProgram(event)   }
                         handleChange      = { () => this.handleChangeProgram(event)   }
-                        handleRemoveRule  = { () => this.handleRemoveRule(event)   }
+
+                        handleRemove      = { () => this.handleRemoveProgram(event)   }
+
                         handleAddRule     = { () => this.handleAddRule(event)   }
+                        handleRemoveRule  = { () => this.handleRemoveRule(event)   }
+                        
+                        handleAddAction     = { () => this.handleAddAction(event)   }
+                        handleRemoveAction  = { () => this.handleRemoveAction(event)   }
           />
         </div>
       );
@@ -1530,7 +1641,7 @@ class AppComponent extends React.Component{
        });
      }
 
-     //programs - event handlers
+     //rule=conditions 
      handleRemoveRule(event){
       const target = event.target
       const programCode     = target.getAttribute("programCode")
@@ -1544,6 +1655,24 @@ class AppComponent extends React.Component{
       else{
         rules.splice(ruleIndex,1)//remove rule at index
         program.rule = rules
+      }
+      this.setState({scheduler: this.state.scheduler})
+     }
+
+
+     handleRemoveAction(event){
+      const target = event.target
+      const programCode     = target.getAttribute("programCode")
+      const itemIndex       = parseInt(target.getAttribute("itemIndex"))
+
+      let program =  this.state.scheduler.filter(item => item.code == programCode)[0]
+      let actions =  program.action
+      if(actions.length == 1){
+        program.action =  []
+      }
+      else{
+        actions.splice(itemIndex,1)//remove rule at index
+        program.action = actions
       }
       this.setState({scheduler: this.state.scheduler})
      }
@@ -1570,6 +1699,22 @@ class AppComponent extends React.Component{
       this.setState({scheduler: this.state.scheduler})
      }
 
+     handleAddAction(event){
+      const target = event.target;
+      const programCode     = target.getAttribute("programCode"); 
+      let program =  this.state.scheduler.filter(item => item.code == programCode)[0];
+      let actions = program.action;
+      
+      if(actions != undefined){
+        actions.push({})
+      }
+      else{
+        program.action = [{}]
+      }
+
+      this.setState({scheduler: this.state.scheduler})
+     }
+
      handleRemoveProgram(event){
        const target = event.target;
        const code = target.getAttribute("code");
@@ -1581,7 +1726,7 @@ class AppComponent extends React.Component{
      handleChangeProgram(event){
        const target = event.target;
        const key =  target.getAttribute("keyRow");
-       const code = target.name;
+       const code = target.name;//??
        const tag = target.getAttribute("tag")
        const index = target.getAttribute("index");
 
@@ -1590,8 +1735,8 @@ class AppComponent extends React.Component{
        let program =  array.filter(item => item.code == key)[0];//filtruj
 
        //maintanin rules
-       const ruleItems = ['device', 'targetValue', 'delta', 'operator', 'linkOperator'];
-       const actionItems = ['device', 'command'];
+       const ruleItems      = ['device', 'targetValue', 'delta', 'operator', 'linkOperator'];
+       const actionItems    = ['device', 'command'];
 
        if(ruleItems.includes(code) && tag == "rule"){
          if(program.rule == undefined){
@@ -1611,7 +1756,7 @@ class AppComponent extends React.Component{
              program.action.push(json);
            }
            else
-             program.action[0][code] = target.value;
+             program.action[index][code] = target.value;
        }
        else
          program[code] = target.value;
