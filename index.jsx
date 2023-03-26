@@ -1,3 +1,47 @@
+const deviceMeasuredGroup = ["Thermometer", "Inverter"]
+
+const deviceTypes = 
+  [
+      { group: "Thermometer" , 
+        code: "Thermometer Bosh"          ,
+        units: ['C'], name :"Termometr Bosh"   , 
+        default_port: "0x76"
+      },
+
+      { group: "Thermometer" , code: "Thermometer Dallas"        ,units: ['C'], name :"Termometr Dallas" , default_port:"99/1" },
+      
+      { group: "Relay"       , 
+        code: "Relay"        ,
+        units: [],  
+        name :"Bramka"           , 
+        default_port:"99",
+        //ext_layout: extRelayDiv   
+      },
+
+      { group: "Inverter"    , code: "Huawei Sun2000 Inverter"   ,units: ['W', 'V'], name :"Huawei Sun2000 Inverter"}
+  ]
+
+function getDeviceGroup(deviceCode){
+  if(deviceCode != undefined){
+      for (let i = 0; i < deviceTypes.length; i++) {
+        if(deviceTypes[i].code == deviceCode)
+          return deviceTypes[i].group
+      }
+  }
+  return ""
+}
+
+
+function getDeviceAttribute(deviceCode, attribute){
+  if(deviceCode != undefined){
+    for (let i = 0; i < deviceTypes.length; i++) {
+      if(deviceTypes[i].code == deviceCode)
+        return deviceTypes[i][attribute]
+    }
+  }
+  return ""
+}
+
 
 //import * as tool from './tools.js'
 
@@ -111,7 +155,9 @@ constructor(props) {
                              <div class="uk-margin">
                                <label class="uk-form-label" for="form-horizontal-text">Port Mqtt: </label>
                                <div class="uk-form-controls">
-                                   <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj port.." name="mqtt_port_mqtt" value={settings.mqtt_port_mqtt} onChange={ () => this.props.eventChangeItem()}/>
+                                   <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj port.." name="mqtt_port_mqtt" 
+                                            value={settings.mqtt_port_mqtt} 
+                                            onChange={ () => this.props.eventChangeItem()}/>
                                </div>
                            </div>
 
@@ -164,7 +210,7 @@ class ProgramForm extends React.Component{
      for(var device of this.props.devices){
          if(device.code == ruleDevice1){
            port =  device.port;
-           defaultActionCommand = ("Thermometer"  == device.type ? "Measure" : "TurnOn");
+           defaultActionCommand = (deviceMeasuredGroup.includes(getDeviceGroup(device.type)) ? "Measure" : "TurnOn");
            break;
          }
      }
@@ -270,47 +316,118 @@ class DeviceForm extends React.Component {
    super(props);
  }
 
+ 
+ isLocalDevice(mqttSubject, setupDeviceName){
+   return mqttSubject.indexOf(setupDeviceName + "/device/") == 0;
+ }
+
+  getDeviceUnits(deviceCode){
+  let items = []
+  items.push(<option label=""></option>);
+
+  for (let i = 0; i < deviceTypes.length; i++) {
+    if(deviceTypes[i].code == deviceCode){
+       let deviceModel = deviceTypes[i]
+       for( let j = 0; j < deviceModel.units.length; j++){
+          let unit = deviceModel.units[j]
+          items.push(<option value={unit}>{unit}</option>);
+       }
+       break
+    }
+  }
+  return items;
+  }
+
  render() {
 
-   let onOffDiv = (
-     <div>
-       <div class="uk-margin">
-           <label class="uk-form-label" for="form-horizontal-text">Wartość włączenia </label>
-           <div class="uk-form-controls">
-               <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj wartość włączenia.."
-                     name="OnValue"
-                     value={this.props.device.OnValue}
-                     keyRow = {this.props.device.code}
-                     onChange={() => this.props.handleChange()}/>
-           </div>
-       </div>
+   
 
-       <div class="uk-margin">
-           <label class="uk-form-label" for="form-horizontal-text">Wartość wyłączenia </label>
-           <div class="uk-form-controls">
-               <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj wartość wyłączenia.."
-                       name="OffValue"
-                       value={this.props.device.OffValue}
-                       keyRow = {this.props.device.code}
-                       onChange={() => this.props.handleChange()}/>
-           </div>
-       </div>
-     </div>
-   )
+  let relayPart = "";
+
+   if(this.isLocalDevice(this.props.device.mqtt_topic, this.props.settings.name) 
+      && "Relay" == getDeviceGroup(this.props.device.type)){
+        relayPart = (
+          <div>
+            <div class="uk-margin">
+                <label class="uk-form-label" for="form-horizontal-text">Wartość włączenia </label>
+                <div class="uk-form-controls">
+                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj wartość włączenia.."
+                          name="OnValue"
+                          value={this.props.device.OnValue}
+                          keyRow = {this.props.device.code}
+                          onChange={() => this.props.handleChange()}/>
+                </div>
+            </div>
+     
+            <div class="uk-margin">
+                <label class="uk-form-label" for="form-horizontal-text">Wartość wyłączenia </label>
+                <div class="uk-form-controls">
+                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj wartość wyłączenia.."
+                            name="OffValue"
+                            value={this.props.device.OffValue}
+                            keyRow = {this.props.device.code}
+                            onChange={() => this.props.handleChange()}/>
+                </div>
+            </div>
+          </div>
+        )
+   }
 
 
-   if(this.props.device.type == "Thermometer"){
-     onOffDiv = "";
+   let inverterPart = "";
+
+   if(this.isLocalDevice(this.props.device.mqtt_topic, this.props.settings.name) 
+      && getDeviceGroup(this.props.device.type) == "Inverter"){
+        inverterPart = (
+          <div>
+            <div class="uk-margin">
+                <label class="uk-form-label" for="form-horizontal-text">Inverter AP SSID</label>
+                <div class="uk-form-controls">
+                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj ssid ap falownika.."
+                          name="inverter_ap_ssid"
+                          value={this.props.device.inverter_ap_ssid ?  this.props.device.inverter_ap_ssid: "SUN2000-HV2150048209"}
+                          keyRow = {this.props.device.code}
+                          onChange={() => this.props.handleChange()}/>
+                </div>
+            </div>
+     
+            <div class="uk-margin">
+                <label class="uk-form-label" for="form-horizontal-text">Inverter AP password </label>
+                <div class="uk-form-controls">
+                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj hasło.."
+                            name="inverter_ap_passwd"
+                            value={this.props.device.inverter_ap_passwd ? this.props.device.inverter_ap_passwd : "Changeme"}
+                            keyRow = {this.props.device.code}
+                            onChange={() => this.props.handleChange()}/>
+                </div>
+            </div>
+
+            <div class="uk-margin">
+                <label class="uk-form-label" for="form-horizontal-text">Inverter Modbus IP </label>
+                <div class="uk-form-controls">
+                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj ip modbus .."
+                            name="inverter_modbus_ip"
+                            value={this.props.device.inverter_modbus_ip ? this.props.device.inverter_modbus_ip : "192.168.200.1"}
+                            keyRow = {this.props.device.code}
+                            onChange={() => this.props.handleChange()}/>
+                </div>
+            </div>
+          </div>
+        )
    }
 
 
    let items = [];
    items.push(<option label=""></option>);
-   items.push(<option value="Thermometer">Termometr</option>);
-   items.push(<option value="Relay">Bramka</option>);
-
+   
+   for (let i = 0; i < deviceTypes.length; i++) {
+    items.push(<option value={deviceTypes[i].code}>{deviceTypes[i].name}</option>);
+   }
 
    let itemsMap = React.Children.toArray(items);
+
+
+   let unitsMap = React.Children.toArray(this.getDeviceUnits(this.props.device.type));
 
    return (
        <div>
@@ -328,17 +445,19 @@ class DeviceForm extends React.Component {
                                    onChange={() => this.props.handleChange()}/>
                          </div>
                        </div>
-
-                       <div class="uk-margin">
-                           <label class="uk-form-label" for="form-horizontal-text">Port: </label>
-                           <div class="uk-form-controls">
-                               <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj port.."
-                                     name="port"
-                                     value={this.props.device.port}
-                                     keyRow = {this.props.device.code}
-                                     onChange={() => this.props.handleChange()}/>
-                           </div>
-                       </div>
+                       {this.isLocalDevice(this.props.device.mqtt_topic, this.props.settings.name) ?
+                        <div class="uk-margin">
+                            <label class="uk-form-label" for="form-horizontal-text">Port: </label>
+                            <div class="uk-form-controls">
+                                <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj port.."
+                                      name="port"
+                                      value={this.props.device.port ? this.props.device.port : getDeviceAttribute(this.props.device.type, "default_port")}
+                                      keyRow = {this.props.device.code}
+                                      onChange={() => this.props.handleChange()}/>
+                            </div>
+                        </div>
+                        : null
+                       }
 
                        <div class="uk-margin">
                            <label class="uk-form-label" for="form-horizontal-text">Typ: </label>
@@ -354,7 +473,23 @@ class DeviceForm extends React.Component {
                            </div>
                        </div>
 
-                       {onOffDiv}
+                       <div class="uk-margin">
+                           <label class="uk-form-label" for="form-horizontal-text">Jednostka: </label>
+                           <div class="uk-form-controls">
+                               <select class="uk-select"
+                                         name="unit"
+                                         keyRow = {this.props.device.code}
+                                         onChange = {() => this.props.handleChange()}
+                                         value={this.props.device.unit}
+                                       >
+                                   {unitsMap}
+                               </select>
+                           </div>
+                       </div>
+
+
+                       {relayPart}
+                       {inverterPart}
 
                       <div class="uk-margin">
                          <label class="uk-form-label" for="form-horizontal-text">Mqtt: </label>
@@ -366,7 +501,7 @@ class DeviceForm extends React.Component {
                                    onChange={() => this.props.handleChange()}/>
                          </div>
                       </div>
-
+                      {this.isLocalDevice(this.props.device.mqtt_topic, this.props.settings.name) ? 
                       <div class="uk-margin">
                            <label class="uk-form-label" for="form-horizontal-text">Domoticz Idx: </label>
                            <div class="uk-form-controls">
@@ -377,6 +512,8 @@ class DeviceForm extends React.Component {
                                      onChange={() => this.props.handleChange()}/>
                            </div>
                        </div>
+                       :null
+                       }
                    </form>
              </div>
 
@@ -867,6 +1004,7 @@ class DeviceRowComponent extends React.Component{
     super(props);
     this.state = {
       value: null,
+      settings: null,
       index: null,
       clientMqtt : undefined
     };
@@ -876,6 +1014,9 @@ class DeviceRowComponent extends React.Component{
     this.props.clientMqtt.send(this.props.value.mqtt_topic, "command=switch");
   }
 
+   isLocalDevice(mqttSubject, setupDeviceName){
+     return mqttSubject.indexOf(setupDeviceName + "/device/") == 0;
+   }
   render() {
     let style = "uk-tile uk-tile-small uk-margin-top uk-margin-right "
    style += this.props.editMode ? "uk-tile-dotted" : "";
@@ -895,12 +1036,12 @@ class DeviceRowComponent extends React.Component{
     }
 
     //temperature
-    if(this.props.value.type == "Thermometer"){
+    if(deviceMeasuredGroup.includes(getDeviceGroup(this.props.value.type))){
       let temperature = (this.props.value.temperature != undefined  ? this.props.value.temperature : "");
 
       return(
          <div class={style}>
-           <label class="uk-text-large uk-position-top" uk-icon={isEmpty(this.props.value.port) ? "git-branch" : ""} >{this.props.value.code} </label>
+           <label class="uk-text-large uk-position-top" uk-icon={!this.isLocalDevice(this.props.value.mqtt_topic, this.props.settings.name) ? "git-branch" : ""} >{this.props.value.code} </label>
            <div class="uk-column-1-3">
 
              <div >
@@ -916,8 +1057,7 @@ class DeviceRowComponent extends React.Component{
                </g>
                </svg>
                <div>
-                 <div class='side-by-side reading'>{temperature}<span class='superscript'>&deg;C</span></div>
-
+                 <div class='side-by-side reading'>{temperature}<span class='superscript'>{this.props.value.unit}</span></div>
                </div>
              </div>
            </div>
@@ -930,7 +1070,7 @@ class DeviceRowComponent extends React.Component{
       return(
          <div class={style}>
 
-           <label class="uk-text-large uk-position-top" uk-icon={isEmpty(this.props.value.port) ? "git-branch" : ""}  >{this.props.value.code}</label>
+           <label class="uk-text-large uk-position-top" uk-icon={!this.isLocalDevice(this.props.value.mqtt_topic, this.props.settings.name) ? "git-branch" : ""}  >{this.props.value.code}</label>
            <div class="uk-column-1-4 uk-margin-top">
              <p class="uk-text-small">{checked ? "Włączony" : "Wyłączony"}</p>
 
@@ -1357,7 +1497,7 @@ class AppComponent extends React.Component{
      let randomCode = Math.random().toString(36).substring(7);
      let mqtt_topic = this.state.settings.name + "/device/" +randomCode;
 
-     let newDevice = { port : "0", code : randomCode , mqtt_topic : mqtt_topic};
+     let newDevice = { port : "", code : randomCode , mqtt_topic : mqtt_topic};
 
      let devices = this.state.items;
      devices.push(newDevice);
@@ -1382,10 +1522,10 @@ class AppComponent extends React.Component{
      });
   }
 
-  renderDeviceRow(index, device){
+  renderDeviceRow(index, device, settings){
      let editDiv = (
          <div>
-             <DeviceForm device = {device}
+             <DeviceForm device = {device} settings = {settings}
                  removeItem    = { () => this.handleDeviceRemove(event)   }
                  handleChange  = { () => this.handleDeviceChange(event) }
              />
@@ -1398,6 +1538,7 @@ class AppComponent extends React.Component{
                  index = {index} 
                  clientMqtt = {this.state.clientMqtt} 
                  value={device} 
+                 settings = {settings}
                  editMode = {this.state.editMode}
                  domoticzIdx = {this.state.domoticzIdx}
                  />
@@ -1467,12 +1608,12 @@ class AppComponent extends React.Component{
      )
   }
 
-  renderDeviceRows(items){
+  renderDeviceRows(items, settings){
     let html
     let arr = [];
     let index = 0;
     for(var device of items){
-       arr.push(this.renderDeviceRow(index++, device));
+       arr.push(this.renderDeviceRow(index++, device, settings));
     }
 
     //new el
@@ -1534,7 +1675,7 @@ class AppComponent extends React.Component{
 
                        <div class="uk-flex-center uk-margin-top ">
                           <span class="uk-label">Podpięte urządzenia</span>
-                               {this.renderDeviceRows(this.state.items)}
+                               {this.renderDeviceRows(this.state.items, this.state.settings)}
                        </div>
 
                        <div class="uk-flex-center uk-margin-top">
