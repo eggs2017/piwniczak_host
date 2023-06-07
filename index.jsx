@@ -2,22 +2,9 @@ const deviceMeasuredGroup = ["Thermometer", "Inverter"]
 
 const deviceTypes = 
   [
-      { group: "Thermometer" , 
-        code: "Thermometer Bosh"          ,
-        units: ['C'], name :"Termometr Bosh"   , 
-        default_port: "0x76"
-      },
-
+      { group: "Thermometer" , code: "Thermometer Bosh"          ,units: ['C', 'hPa', '%'], name :"Termometr Bosh"   , default_port: "0x76"},
       { group: "Thermometer" , code: "Thermometer Dallas"        ,units: ['C'], name :"Termometr Dallas" , default_port:"99/1" },
-      
-      { group: "Relay"       , 
-        code: "Relay"        ,
-        units: [],  
-        name :"Bramka"           , 
-        default_port:"99",
-        //ext_layout: extRelayDiv   
-      },
-
+      { group: "Relay"       , code: "Relay"                     ,units: [],  name :"Bramka"           , default_port:"99"   },
       { group: "Inverter"    , code: "Huawei Sun2000 Inverter"   ,units: ['W', 'V'], name :"Huawei Sun2000 Inverter"}
   ]
 
@@ -31,16 +18,6 @@ function getDeviceGroup(deviceCode){
   return ""
 }
 
-
-function getDeviceAttribute(deviceCode, attribute){
-  if(deviceCode != undefined){
-    for (let i = 0; i < deviceTypes.length; i++) {
-      if(deviceTypes[i].code == deviceCode)
-        return deviceTypes[i][attribute]
-    }
-  }
-  return ""
-}
 
 
 //import * as tool from './tools.js'
@@ -321,6 +298,18 @@ class DeviceForm extends React.Component {
    return mqttSubject.indexOf(setupDeviceName + "/device/") == 0;
  }
 
+  getDeviceAttribute(deviceCode, attribute){
+  if(deviceCode != undefined){
+    for (let i = 0; i < deviceTypes.length; i++) {
+      if(deviceTypes[i].code == deviceCode)
+        //this.props.handleChange()
+        document
+        return deviceTypes[i][attribute]
+    }
+  }
+  return ""
+}
+
   getDeviceUnits(deviceCode){
   let items = []
   items.push(<option label=""></option>);
@@ -340,80 +329,36 @@ class DeviceForm extends React.Component {
 
  render() {
 
-   
+   let onOffDiv = (
+     <div>
+       <div class="uk-margin">
+           <label class="uk-form-label" for="form-horizontal-text">Wartość włączenia </label>
+           <div class="uk-form-controls">
+               <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj wartość włączenia.."
+                     name="OnValue"
+                     value={this.props.device.OnValue}
+                     keyRow = {this.props.device.code}
+                     onChange={() => this.props.handleChange()}/>
+           </div>
+       </div>
 
-  let relayPart = "";
-
-   if(this.isLocalDevice(this.props.device.mqtt_topic, this.props.settings.name) 
-      && "Relay" == getDeviceGroup(this.props.device.type)){
-        relayPart = (
-          <div>
-            <div class="uk-margin">
-                <label class="uk-form-label" for="form-horizontal-text">Wartość włączenia </label>
-                <div class="uk-form-controls">
-                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj wartość włączenia.."
-                          name="OnValue"
-                          value={this.props.device.OnValue}
-                          keyRow = {this.props.device.code}
-                          onChange={() => this.props.handleChange()}/>
-                </div>
-            </div>
-     
-            <div class="uk-margin">
-                <label class="uk-form-label" for="form-horizontal-text">Wartość wyłączenia </label>
-                <div class="uk-form-controls">
-                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj wartość wyłączenia.."
-                            name="OffValue"
-                            value={this.props.device.OffValue}
-                            keyRow = {this.props.device.code}
-                            onChange={() => this.props.handleChange()}/>
-                </div>
-            </div>
-          </div>
-        )
-   }
+       <div class="uk-margin">
+           <label class="uk-form-label" for="form-horizontal-text">Wartość wyłączenia </label>
+           <div class="uk-form-controls">
+               <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj wartość wyłączenia.."
+                       name="OffValue"
+                       value={this.props.device.OffValue}
+                       keyRow = {this.props.device.code}
+                       onChange={() => this.props.handleChange()}/>
+           </div>
+       </div>
+     </div>
+   )
 
 
-   let inverterPart = "";
-
-   if(this.isLocalDevice(this.props.device.mqtt_topic, this.props.settings.name) 
-      && getDeviceGroup(this.props.device.type) == "Inverter"){
-        inverterPart = (
-          <div>
-            <div class="uk-margin">
-                <label class="uk-form-label" for="form-horizontal-text">Inverter AP SSID</label>
-                <div class="uk-form-controls">
-                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj ssid ap falownika.."
-                          name="inverter_ap_ssid"
-                          value={this.props.device.inverter_ap_ssid ?  this.props.device.inverter_ap_ssid: "SUN2000-HV2150048209"}
-                          keyRow = {this.props.device.code}
-                          onChange={() => this.props.handleChange()}/>
-                </div>
-            </div>
-     
-            <div class="uk-margin">
-                <label class="uk-form-label" for="form-horizontal-text">Inverter AP password </label>
-                <div class="uk-form-controls">
-                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj hasło.."
-                            name="inverter_ap_passwd"
-                            value={this.props.device.inverter_ap_passwd ? this.props.device.inverter_ap_passwd : "Changeme"}
-                            keyRow = {this.props.device.code}
-                            onChange={() => this.props.handleChange()}/>
-                </div>
-            </div>
-
-            <div class="uk-margin">
-                <label class="uk-form-label" for="form-horizontal-text">Inverter Modbus IP </label>
-                <div class="uk-form-controls">
-                    <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj ip modbus .."
-                            name="inverter_modbus_ip"
-                            value={this.props.device.inverter_modbus_ip ? this.props.device.inverter_modbus_ip : "192.168.200.1"}
-                            keyRow = {this.props.device.code}
-                            onChange={() => this.props.handleChange()}/>
-                </div>
-            </div>
-          </div>
-        )
+   if(!this.isLocalDevice(this.props.device.mqtt_topic, this.props.settings.name) 
+      || deviceMeasuredGroup.includes(getDeviceGroup(this.props.device.type))){
+     onOffDiv = "";
    }
 
 
@@ -428,6 +373,10 @@ class DeviceForm extends React.Component {
 
 
    let unitsMap = React.Children.toArray(this.getDeviceUnits(this.props.device.type));
+
+   //set default value
+   if(!this.props.device.port)
+      this.props.device.port = this.getDeviceAttribute(this.props.device.type, "default_port")
 
    return (
        <div>
@@ -451,7 +400,7 @@ class DeviceForm extends React.Component {
                             <div class="uk-form-controls">
                                 <input class="uk-input" id="form-horizontal-text" type="text" placeholder="..podaj port.."
                                       name="port"
-                                      value={this.props.device.port ? this.props.device.port : getDeviceAttribute(this.props.device.type, "default_port")}
+                                      value={this.props.device.port}
                                       keyRow = {this.props.device.code}
                                       onChange={() => this.props.handleChange()}/>
                             </div>
@@ -488,8 +437,7 @@ class DeviceForm extends React.Component {
                        </div>
 
 
-                       {relayPart}
-                       {inverterPart}
+                       {onOffDiv}
 
                       <div class="uk-margin">
                          <label class="uk-form-label" for="form-horizontal-text">Mqtt: </label>
