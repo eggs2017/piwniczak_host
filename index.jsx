@@ -166,6 +166,10 @@ class ProgramForm extends React.Component{
    };
  }
 
+ isLocalDevice(mqttSubject, setupDeviceName){
+  return mqttSubject.indexOf(setupDeviceName + "/device/") == 0;
+}
+
  render() {
    //choose icon
    let checked = false
@@ -175,7 +179,6 @@ class ProgramForm extends React.Component{
    }
 
    
-  
    let defaultActionCommand = "";
    let ruleDevice1 = (this.props.value.rule != undefined && this.props.value.rule.length > 0? 
             this.props.value.rule[0].device : undefined);
@@ -193,14 +196,19 @@ class ProgramForm extends React.Component{
      }
    }
 
-   let vals = []
-   vals.push(<option label=""></option>);
+   let deviceList = []
+   let localDeviceList = []
+   deviceList.push(<option label=""></option>);
+   localDeviceList.push(<option label=""></option>);
 
    for(var device of this.props.devices){
-       vals.push( <option value={device.code} >{device.code}</option> );
+    let item = <option value={device.code} >{device.code}</option>
+    deviceList.push(item);
+    if( this.isLocalDevice(device.mqtt_topic, this.props.settings.name ))
+        localDeviceList.push(item)
    }
-   let deviceMap = React.Children.toArray(vals);
-
+   let deviceMap = React.Children.toArray(deviceList);
+   let localDeviceMap = React.Children.toArray(localDeviceList);
    return(
 
      <div>
@@ -257,7 +265,7 @@ class ProgramForm extends React.Component{
                        <ActionRowsComponent
                           keyRow = {this.props.value.code}  
                           actions= {this.props.value.action}  
-                          deviceMap = {deviceMap}  
+                          deviceMap = {localDeviceMap}  
                           handleChange  = { () => this.props.handleChange(event) }
 
                           handleAdd = { () => this.props.handleAddAction(event) }
@@ -1253,6 +1261,7 @@ class AppComponent extends React.Component{
        };
      };
 
+         
    importFromFile(){
      let fileName = document.getElementById("importSettingsId");
 
@@ -1264,24 +1273,18 @@ class AppComponent extends React.Component{
        
        //check device is the same
        let name = this.state.settings.name;
+       let brandNew= _.isUndefined(name) || _.isEmpty(name);
+       let hasItems  = _.isUndefined(this.state) || _.isUndefined(this.state.items) 
 
-
-       if(name != undefined && name == importedJson.settings.name){
-         
-         this.setState({settings   : importedJson.settings});
-         this.setState({scheduler  : importedJson.scheduler});
-         this.setState({items      : importedJson.device});
-
-         UIkit.notification("Import ustawień, urządzeń, programów", {status:'primary'})
-
-       }else{ //Import external devices
-         let items2Mod = [... this.state.items]; 
+       if(!brandNew && hasItems)
+       { //Import external devices
+         let items2Merge = [... this.state.items];    
          //update sortId
-         let maxSortId = _.maxBy(items2Mod , function(o){ return o.sortId ;}).sortId;
+         let maxSortId = _.maxBy(items2Merge , function(o){ return o.sortId ;}).sortId;
          
          _.each(importedJson.device, function(elem) {
            let topic = elem.mqtt_topic;
-           let index = _.findIndex(items2Mod, function(o) { return o.mqtt_topic == topic; });
+           let index = _.findIndex(items2Merge, function(o) { return o.mqtt_topic == topic; });
            if(index == -1){
              elem.sortId = ++maxSortId;  //adjust sort
              elem.port=undefined;        //clear port
@@ -1292,11 +1295,22 @@ class AppComponent extends React.Component{
 
          this.setState({items: items2Mod});
 
-         UIkit.notification("Niezgodność urządzeń - import urządzeń zewnętrznych", {status:'primary'})
+         UIkit.notification("Niezgodność urządzeń - import jedynie urządzeń zewnętrznych", {status:'primary'})
        }
+       else{
+         
+         this.setState({settings   : importedJson.settings});
+         this.setState({scheduler  : importedJson.scheduler});
+         this.setState({items      : importedJson.device});
+
+         UIkit.notification("Import ustawień, urządzeń, programów", {status:'primary'})
+       }
+       
      };
    
    }
+   
+
    exportToFile(){
      //build full backup
      var json = {};
@@ -1501,6 +1515,7 @@ class AppComponent extends React.Component{
         <div >
           <ProgramForm  value = {item}
                         devices = {this.state.items}
+                        settings = {this.state.settings}
                         handleChange      = { () => this.handleChangeProgram(event)   }
 
                         handleRemove      = { () => this.handleRemoveProgram(event)   }
